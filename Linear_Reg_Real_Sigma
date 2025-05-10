@@ -1,0 +1,39 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+# Datos
+p_values = np.arange(0, 1.05, 0.05)
+variances01 = [
+    0.060787, 0.689309, 1.412896, 2.333145, 2.790738, 3.231345, 4.282068,
+    4.966666, 5.623544, 6.962345, 7.655300, 8.226047, 9.016990, 9.744841,
+    12.491343, 11.464545, 13.031865, 16.587905, 15.291274, 15.073529, 16.683591
+]
+variances005 = [
+    0.006442, 0.297904, 0.539817, 0.814874, 1.097444, 1.350346, 1.582038,
+    1.665666, 1.859159, 2.045701, 2.280768, 2.359859, 2.493942, 2.527029,
+    2.613031, 2.588206, 2.707736, 2.836975, 2.942253, 2.780627, 2.767283
+]
+
+variances = variances01
+# Ajuste de regresión lineal
+X = np.array(p_values).reshape(-1, 1)
+y = np.array(variances)
+reg = LinearRegression().fit(X, y)
+y_pred = reg.predict(X)
+
+# Plot
+plt.figure(figsize=(10, 6))
+plt.plot(p_values, variances, 'o', label='Varianzas reales')
+plt.plot(p_values, y_pred, '-', label='Regresión lineal', color='red')
+plt.xlabel('p')
+plt.ylabel('Varianza final')
+plt.title('Varianza final vs p')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+# Mostrar coeficientes de la regresión
+print(f"Pendiente: {reg.coef_[0]:.4f}")
+print(f"Intersección: {reg.intercept_:.4f}")
+print(f"R²: {reg.score(X, y):.4f}")

@@ -1,0 +1,51 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parámetros
+T = 200  # Número de pasos de tiempo
+K = 1000000  # Número de simulaciones
+sigma = 0.3  # Desviación estándar
+p = 0.15  # Parámetro de activación
+b = 0.1
+c = 0.12
+L0 = 0.1  # Valor inicial
+theta = 0  # Sin decaimiento
+
+# Lista para almacenar los valores finales de cada simulación
+N1_all_final = []
+
+# Función para calcular L_approx(t)
+def L_approx(t):
+    factor = sigma * ((1 - theta) ** t)
+
+    term1 = (1 - p)**2 * np.random.normal(loc=L0, scale=factor * abs(L0))
+    
+    term2a = np.random.normal(loc=L0 + t * b, scale=factor * abs(L0 + t * b))
+    term2b = np.random.normal(loc=L0 - t * c, scale=factor * abs(L0 - t * c))
+    term2 = (1 - p) * p * (term2a + term2b)
+    
+    term3 = p**2 * np.random.normal(loc=L0 + t * (b - c), scale=factor * abs(L0 + t * (b - c)))
+
+    return term1 + term2 + term3
+
+
+# Crear la figura
+plt.figure(figsize=(10, 6))
+
+for i in range(K):
+    L_final = L_approx(T)
+    N1_all_final.append(L_final)
+
+    if i % (K // 100) == 0:
+        plt.plot([0, T], [L0, L_final], color='blue', alpha=0.1)
+
+# Etiquetas del gráfico
+plt.title('Final $L(T)$ for Each Simulation (Using $L_{\\text{approx}}$)', fontsize=14)
+plt.xlabel('Time steps ($t$)', fontsize=12)
+plt.ylabel('$L(T)$', fontsize=12)
+plt.grid(True)
+plt.show()
+
+# Estadísticas
+print("mean:", np.mean(N1_all_final))
+print("var:", np.var(N1_all_final))

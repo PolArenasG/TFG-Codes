@@ -1,0 +1,48 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# General simulation parameters
+T = 200           # Number of time steps in each simulation
+K = 100000        # Number of Monte Carlo simulations
+p = 0.95          # Probability of a random increase or decrease at each step
+b = 0.1           # Additive increase when event occurs
+c = 0.1           # Additive decrease when event occurs
+sigmas = [0.05, 0.1, 0.3]  # Different values of sigma (volatility)
+
+# Create a figure to hold 3 subplots (one for each sigma)
+plt.figure(figsize=(18, 5))
+
+# Loop over each sigma value to run simulations and plot the results
+for idx, sigma in enumerate(sigmas):
+    N1_all_final = []  # Store the final value L_fin for each simulation
+
+    for i in range(K):
+        N1 = np.zeros(T)
+        N1[0] = 0.1  # Initial value
+
+        # Generate a stochastic path with multiplicative noise and random jumps
+        for t in range(T - 1):
+            N1[t + 1] = N1[t] * (1 + np.random.normal(loc=0, scale=sigma))  # multiplicative noise
+            if np.random.random() < p:
+                N1[t + 1] += b  # random additive boost
+            if np.random.random() < p:
+                N1[t + 1] -= c  # random additive drop
+
+        N1_all_final.append(N1[-1])  # Save final value (L_fin)
+
+    # Compute statistics
+    mean_final = np.mean(N1_all_final)
+    var_final = np.var(N1_all_final)
+
+    # Create a subplot for the current sigma
+    plt.subplot(1, 3, idx + 1)
+    sns.kdeplot(N1_all_final, fill=True, bw_adjust=0.5)
+    plt.title(f"Density of $L_{{fin}}$ for σ = {sigma}\nMean = {mean_final:.4f}, Variance = {var_final:.4f}")
+    plt.xlabel("$L_{fin}$")
+    plt.ylabel("Density")
+    plt.grid(True)
+
+# Adjust layout so plots don't overlap
+plt.tight_layout()
+plt.show()

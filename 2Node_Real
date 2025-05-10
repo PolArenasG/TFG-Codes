@@ -1,0 +1,111 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+# Parámetros de la simulación
+T = 500  # Number of time steps
+K = 100000  # Number of simulations
+sigma = 0.1  # Standard deviation of the normal distribution
+p = 1  # Network activation parameter
+b = 0.1
+c = 0.12
+count = 0
+count2 = 0
+count3 = 0
+
+# Arrays to store simulation results
+N1_all_final = []
+all_paths = np.zeros((K, T))  # Store full paths for advanced analysis
+
+# Generación de las trayectorias
+plt.figure(figsize=(10, 6))  # Plot individual sample paths
+for i in range(K):
+    N1 = np.zeros(T)
+    N1[0] = 0.1  # Initial value
+    for t in range(T - 1):
+        N1[t + 1] = N1[t] * (1 + np.random.normal(loc=0, scale=sigma))  # Multiplicative noise
+        P1 = np.random.random()
+        P2 = np.random.random()
+        if P1 < p:
+            N1[t + 1] += b
+            count += 1
+        if P2 < p:
+            N1[t + 1] -= c
+            count2 += 1
+
+    N1_all_final.append(N1[-1])
+    all_paths[i, :] = N1
+
+    if i % (K // 100) == 0:
+        plt.plot(N1, color='blue', alpha=0.1)
+    if N1[-1] < 0:
+        count3 += 1
+
+# Estadísticas básicas
+print("num +b:", count / K)
+print("num -c:", count2 / K)
+print("mean:", np.mean(N1_all_final))
+print("var:", np.var(N1_all_final))
+print("median:", np.median(N1_all_final))
+print("P<0:", count3 / K)
+
+
+# Graficar las trayectorias simuladas
+plt.title('Evolution of $L(t)$ for Each Simulation', fontsize=14)
+plt.xlabel('Time steps ($t$)', fontsize=12)
+plt.ylabel('$L(t)$', fontsize=12)
+plt.grid(True)
+plt.show()
+
+# Densidad de los valores finales de L(t)
+plt.figure(figsize=(10, 6))
+sns.kdeplot(N1_all_final, fill=True, color="steelblue", linewidth=2)
+plt.title("Densidad de $L_{\\text{fin}}$ después de 125 pasos", fontsize=14)
+plt.xlabel("$L_{\\text{fin}}$", fontsize=12)
+plt.ylabel("Densidad", fontsize=12)
+plt.grid(True)
+plt.show()
+
+# Ajustar la distribución normal a los datos
+positive_vals = np.array(N1_all_final)  # Los datos finales de las simulaciones
+positive_vals = positive_vals[positive_vals > 0]  # Asegurarse de que no haya valores <= 0
+
+# Ajuste de parámetros de la distribución normal (media y desviación estándar)
+mu, std = stats.norm.fit(positive_vals)
+
+# Generar la función de densidad de la normal ajustada
+x = np.linspace(min(positive_vals), max(positive_vals), 1000)
+pdf_normal = stats.norm.pdf(x, mu, std)
+
+# Graficar los datos y la normal ajustada
+plt.figure(figsize=(10, 6))
+sns.histplot(positive_vals, bins=50, kde=False, stat='density', color='lightgray', label='Datos reales')
+plt.plot(x, pdf_normal, 'r-', label='Normal ajustada')
+plt.title("Distribución Normal Ajustada a los Datos")
+plt.xlabel("$L_{\\text{fin}}$")
+plt.ylabel("Densidad")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Estadísticas en escala logarítmica
+log_vals = np.log(np.array(N1_all_final)[np.array(N1_all_final) > 0])  # Evitar log(0)
+print("mean(log N1):", np.mean(log_vals))
+print("median(log N1):", np.median(log_vals))
+print("geometric median:", np.exp(np.median(log_vals)))
+print("std(log N1):", np.std(log_vals))
+
+# Varianza en cada trayectoria
+path_variances = np.var(all_paths, axis=1)
+print("mean per-path variance:", np.mean(path_variances))
+
+# Varianza a lo largo del tiempo
+variance_over_time = np.var(all_paths, axis=0)
+plt.figure(figsize=(10, 5))
+plt.plot(variance_over_time)
+plt.title("Variance of $L(t)$ Over Time", fontsize=14)
+plt.xlabel("Time step ($t$)", fontsize=12)
+plt.ylabel("Variance", fontsize=12)
+plt.grid(True)
+plt.show()
